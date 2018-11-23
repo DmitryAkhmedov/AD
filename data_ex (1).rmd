@@ -1,0 +1,90 @@
+---
+title: "Untitled"
+author: "Sebastian Korshunovsky"
+date: '24 ???????? 2017 ?? '
+output: html_document
+---
+
+```{r}
+set.seed(42) 
+train_ind <- sample(1:nrow(iris), 0.7*nrow(iris)) 
+train <- iris[train_ind,]
+test <- iris[-train_ind,] 
+
+library("e1071")
+
+svm_model <- svm(as.factor(Species) ~ Sepal.Length+Sepal.Width+Petal.Length+Petal.Width, data=train, kernel="linear")
+summary(svm_model)
+#?????????????????????????? ?????????? ???? ????????????????
+svm.Pred<-predict(svm_model, test[,c("Sepal.Length", "Sepal.Width",  "Petal.Length", "Petal.Width")], probability=FALSE)
+library(caret)
+confusionMatrix(svm.Pred,test$Species)
+#Accuracy = 0.9556 
+```
+
+```{r}
+library(rpart)
+tree.iris=rpart(Species~.-Species,train)
+rpart.plot::prp(tree.iris)
+
+```
+
+```{r}
+rpartPred <- predict(tree.iris, train, type = "class")
+confusionMatrix(rpartPred,train$Species)
+```
+
+```{r}
+rpartPred <- predict(tree.iris, test, type = "class")
+confusionMatrix(rpartPred,test$Species)
+
+#Accuracy = 0.9333 
+```
+
+
+
+```{r}
+set.seed(38)
+iris=as.data.frame(iris)
+irisCluster <- kmeans(iris[, 1:4], 3)
+irisCluster
+```
+
+```{r}
+trans = preProcess(iris[,1:4], method=c( "center","scale","pca"))
+PC = predict(trans, iris[,1:4])
+trans$rotation
+```
+
+```{r}
+library(dplyr)
+library(nycflights13)
+flights=as.data.frame(flights)
+flights=na.omit(flights)
+flights_gr=group_by(flights, carrier)
+flights_gr=dplyr::summarise(flights_gr, mean=mean(air_time))
+```
+
+```{r}
+library(igraph)
+library(igraphdata)
+data(karate)
+degree<-as.data.frame(degree(karate))
+```
+
+```{r}
+library(glmnet)
+iris=as.data.frame(iris)
+iris=select(iris, -Species)
+X <- model.matrix(Sepal.Length~.-1, data=iris)
+elastic<-glmnet(X, iris$Sepal.Length, alpha = 0.5, lambda = 1)
+input=iris[1,]
+input$Sepal.Width=3.8
+input$Petal.Length=1.7
+input$Petal.Width=0.4
+input_glm <- model.matrix(Sepal.Length~.-1, data=input)
+glmnet.predictions <- predict(elastic,input_glm)
+glmnet.predictions
+#  s0= 5.668642
+```
+
